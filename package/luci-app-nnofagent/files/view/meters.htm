@@ -1,0 +1,6 @@
+<%+header%>
+<h2 name="content"><%:Meters%></h2>
+<div id="content_flowlog">
+<textarea readonly="readonly" wrap="off" rows="<%=meters:cmatch("\n")+2%>" id="syslog"><%=meters:pcdata()%></textarea>
+</div>
+<%+footer%>

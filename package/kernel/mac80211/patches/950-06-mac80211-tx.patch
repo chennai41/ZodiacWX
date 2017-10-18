@@ -1,0 +1,115 @@
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -38,6 +38,8 @@
+ #include "wpa.h"
+ #include "wme.h"
+ #include "rate.h"
++
++extern void nnOpenflow(u32 in_port, struct sk_buff *skb, struct net_device *dev, struct output_list *output_list );
+ 
+ /* misc utils */
+ 
+@@ -3502,13 +3504,13 @@
+ }
+ EXPORT_SYMBOL(ieee80211_tx_dequeue);
+ 
+-void __ieee80211_subif_start_xmit(struct sk_buff *skb,
+-				  struct net_device *dev,
+-				  u32 info_flags)
++void ieee80211_packet_out_subif_start_xmit(struct sk_buff *skb, struct net_device *dev, u32 info_flags)
+ {
+ 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+ 	struct sta_info *sta;
+ 	struct sk_buff *next;
++
++	trace_printk("Mac80211_TX: Packet out called %s (%d) - %d\n", dev->name, skb->skb_iif, info_flags);
+ 
+ 	if (unlikely(skb->len < ETH_HLEN)) {
+ 		kfree_skb(skb);
+@@ -3580,6 +3582,86 @@
+ 	kfree_skb(skb);
+  out:
+ 	rcu_read_unlock();
++}
++
++void __ieee80211_subif_start_xmit(struct sk_buff *skb, struct net_device *dev, u32 info_flags)
++{
++	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
++	struct sta_info *sta, *rsta, *ssta;
++	struct sk_buff *nnof_skb;
++	u32 in_port;
++	u8 *dst_ehdr, *src_ehdr;
++	u8 output_id = 0;
++	struct output_list *output_list;
++
++	trace_printk("Mac80211_tx: Received packet from %s (if: %d)\n", dev->name, skb->skb_iif);
++	
++	if (unlikely(skb->len < ETH_HLEN)) {
++		kfree_skb(skb);
++		return;
++	}
++
++	// Drop the packet if the destination address is not an associated device
++	if (ieee80211_lookup_ra_sta(sdata, skb, &sta))
++	{
++		kfree_skb(skb);
++		return;
++	}
++			
++	dst_ehdr = skb->data;
++	src_ehdr = dst_ehdr + 6;
++	ssta = sta_info_get(sdata, src_ehdr);
++	// Only process packets if they are from Ethernet
++	if (skb->skb_iif > 0 && skb->skb_iif < 8)		
++	{
++		in_port = ETH_PORT_NO;
++		trace_printk("Mac80211_tx: Calling nnOpenflow: in port %d (%d bytes)\n", in_port, skb->len);
++		trace_printk("Mac80211_tx: Src/Dst: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x / %.2x:%.2x:%.2x:%.2x:%.2x:%.2x \n", src_ehdr[0], src_ehdr[1], src_ehdr[2], src_ehdr[3], src_ehdr[4], src_ehdr[5], dst_ehdr[0], dst_ehdr[1], dst_ehdr[2], dst_ehdr[3], dst_ehdr[4], dst_ehdr[5]);
++		nnof_skb = skb_copy(skb, GFP_ATOMIC);
++		if (!nnof_skb)
++		{
++			net_info_ratelimited("%s: failed to clone skb\n", dev->name);
++			return;	
++		}
++		kfree_skb(skb);
++		output_list = kmalloc(sizeof (struct output_list), GFP_ATOMIC);
++		nnOpenflow(in_port, nnof_skb, dev, output_list);
++
++		while (1)
++		{
++			trace_printk("Mac80211_tx: Returned outport 0x%X, output_id = %d\n", output_list->outport[output_id], output_id);
++			
++			if (output_list->outport[output_id] == NN_PORT_DROP || output_id > MAX_OUTPUTS)		// No match, nnof_skb will be free by nnopenflow 
++			{
++				kfree(output_list);
++				return;
++			}
++
++			if (output_list->outport[output_id] < ETH_PORT_NO)
++			{
++				trace_printk("Mac80211_tx: Checking AID for Out Port %d\n", output_list->outport[output_id]);
++
++				if (output_list->outport[output_id] > FIRST_WLAN1_PORT)
++				{
++					rsta = sta_info_get_by_aid(sdata, output_list->outport[output_id] - FIRST_WLAN1_PORT);
++				} else {
++					rsta = sta_info_get_by_aid(sdata, output_list->outport[output_id]);
++				}
++
++				if(rsta)
++				{
++					memcpy(skb->data, rsta->sta.addr, ETH_ALEN);
++					trace_printk("Mac80211_tx: Dst changed to: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n", dst_ehdr[0], dst_ehdr[1], dst_ehdr[2], dst_ehdr[3], dst_ehdr[4], dst_ehdr[5]);
++				}
++			}
++			ieee80211_packet_out_subif_start_xmit(output_list->skb[output_id], output_list->dev[output_id], 0);
++			trace_printk("Mac80211_tx: Packet sent to output function\n");
++			output_id++;
++		}
++	} else {
++		ieee80211_packet_out_subif_start_xmit(skb, dev, 0);
++	}
++	kfree(output_list);
+ }
+ 
+ static int ieee80211_change_da(struct sk_buff *skb, struct sta_info *sta)

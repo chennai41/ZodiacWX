@@ -1,0 +1,7 @@
+config nnofagent
+	option controller_port '6633'
+	option controller_ip '192.168.1.5'
+	option enabled '1'
+	option auth_bypass '0'
+	option secure '0'
+

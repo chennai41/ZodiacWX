@@ -1,0 +1,378 @@
+--- a/net/mac80211/rx.c
++++ b/net/mac80211/rx.c
+@@ -33,6 +33,9 @@
+ #include "tkip.h"
+ #include "wme.h"
+ #include "rate.h"
++
++extern void nnOpenflow(u32 in_port, struct sk_buff *skb, struct net_device *dev, struct output_list *output_list );
++extern struct packet_out nnPacketout(int buffer_id);
+ 
+ static inline void ieee80211_rx_stats(struct net_device *dev, u32 len)
+ {
+@@ -2181,21 +2184,195 @@
+ 	return true;
+ }
+ 
+-/*
+- * requires that rx->skb is a frame with ethernet header
+- */
++void
++ieee80211_packet_out_skb(void)
++{
++	struct net_device *dev;
++	struct sk_buff *skb, *xmit_skb;
++	struct packet_out pkt_out;
++	int x;
++
++	skb = NULL;
++	xmit_skb = NULL;
++
++	for (x=0;x<PACKET_BUFFER;x++)
++	{
++		pkt_out = nnPacketout(x);
++
++		if (pkt_out.inport == ETH_PORT_NO && pkt_out.outport != -1) // If it is a packet from the Ethernet port send it to the transmit function.
++		{
++			ieee80211_packet_out_subif_start_xmit(pkt_out.skb, pkt_out.dev, 0);
++			return;		
++		} 
++
++		if (pkt_out.outport != -1)
++		{
++		    dev = pkt_out.dev;
++		    skb = pkt_out.skb;
++
++			trace_printk("Mac80211_rx_po: nnPacketout %x returned - out port = %x, skb = 0x%p, dev = 0x%p\n", x, pkt_out.outport, (void*)skb, (void*)dev);
++
++			if (pkt_out.outport > 0 || pkt_out.outport == OFPP13_FLOOD)
++			{
++				trace_printk("Mac80211_rx_po: Processing packet out\n");
++
++				if (pkt_out.outport == OFPP13_FLOOD)	// FLOOD
++				{
++					xmit_skb = skb_copy(skb, GFP_ATOMIC);
++					if (!xmit_skb) net_info_ratelimited("%s: failed to clone multicast frame\n", dev->name);
++					// If packet came in the Ethernet port then the flood only goes to wireless network 
++					if (pkt_out.inport == ETH_PORT_NO) skb = NULL;
++				}
++				
++				if (pkt_out.outport > 0 && pkt_out.outport < ETH_PORT_NO) // The outport is for a wireless device
++				{
++					xmit_skb = skb;
++					skb = NULL;
++				} 
++
++
++				#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
++					if (skb) {
++						/* 'align' will only take the values 0 or 2 here since all
++						 * frames are required to be aligned to 2-byte boundaries
++						 * when being passed to mac80211; the code here works just
++						 * as well if that isn't true, but mac80211 assumes it can
++						 * access fields as 2-byte aligned (e.g. for ether_addr_equal)
++						 */
++						int align;
++
++						align = (unsigned long)(skb->data + sizeof(struct ethhdr)) & 3;
++						if (align) {
++							if (WARN_ON(skb_headroom(skb) < 3)) {
++								dev_kfree_skb(skb);
++								skb = NULL;
++							} else {
++								u8 *data = skb->data;
++								size_t len = skb_headlen(skb);
++								skb->data -= align;
++								memmove(skb->data, data, len);
++								skb_set_tail_pointer(skb, len);
++							}
++						}
++					}
++				#endif
++
++				if (skb) {
++					/* deliver to local stack */
++					trace_printk("Mac80211_rx_po: Sending PACKET_OUT from %d to wired network\n", pkt_out.inport);
++					skb->protocol = eth_type_trans(skb, dev);
++					memset(skb->cb, 0, sizeof(skb->cb));
++					netif_receive_skb(skb);
++				}
++
++				if (xmit_skb) {
++					/*
++					 * Send to wireless media and increase priority by 256 to
++					 * keep the received priority instead of reclassifying
++					 * the frame (see cfg80211_classify8021d).
++					 */
++					trace_printk("Mac80211_rx_po: Sending PACKET_OUT from %d to wireless network\n", pkt_out.inport);
++					xmit_skb->priority += 256;
++					xmit_skb->protocol = htons(ETH_P_802_3);
++					skb_reset_network_header(xmit_skb);
++					skb_reset_mac_header(xmit_skb);
++					dev_queue_xmit(xmit_skb);
++				}	
++			}
++		}
++	}
++	return;
++}
++
++void
++ieee80211_output_skb(struct sk_buff *skb, struct net_device *dev, u8 outport)
++{
++	struct sk_buff *xmit_skb = NULL;
++
++	trace_printk("Mac80211_rx_out: Request received out port = %x, skb = 0x%p, dev = 0x%p\n", outport, (void*)skb, (void*)dev);
++
++	if (outport == 0xFF)	// Broadcast / flood
++	{
++		xmit_skb = skb_copy(skb, GFP_ATOMIC);
++		if (!xmit_skb) net_info_ratelimited("%s: failed to clone multicast frame\n", dev->name);
++	}
++				
++	if (outport < ETH_PORT_NO) // The outport is for a wireless device
++	{
++		xmit_skb = skb;
++		skb = NULL;
++	} 
++		
++
++	#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
++		if (skb) 
++		{
++			/* 'align' will only take the values 0 or 2 here since all
++			* frames are required to be aligned to 2-byte boundaries
++			* when being passed to mac80211; the code here works just
++			* as well if that isn't true, but mac80211 assumes it can
++			* access fields as 2-byte aligned (e.g. for ether_addr_equal)
++			*/
++			int align;
++			align = (unsigned long)(skb->data + sizeof(struct ethhdr)) & 3;
++			if (align) 
++			{
++				if (WARN_ON(skb_headroom(skb) < 3))
++				{
++					dev_kfree_skb(skb);
++					skb = NULL;
++				} else {
++					u8 *data = skb->data;
++					size_t len = skb_headlen(skb);
++					skb->data -= align;
++					memmove(skb->data, data, len);
++					skb_set_tail_pointer(skb, len);
++				}
++			}
++		}
++	#endif
++
++	if (skb) 
++	{
++		/* deliver to local stack */
++		trace_printk("Mac80211_rx_output: Sending packet to wired network\n");
++		skb->protocol = eth_type_trans(skb, dev);
++		memset(skb->cb, 0, sizeof(skb->cb));
++		netif_receive_skb(skb);
++	}
++
++	if (xmit_skb)
++	{
++		/*
++		* Send to wireless media and increase priority by 256 to
++		* keep the received priority instead of reclassifying
++		* the frame (see cfg80211_classify8021d).
++		*/
++		trace_printk("Mac80211_rx_output: Sending packet to wireless network\n");
++		xmit_skb->priority += 256;
++		xmit_skb->protocol = htons(ETH_P_802_3);
++		skb_reset_network_header(xmit_skb);
++		skb_reset_mac_header(xmit_skb);
++		dev_queue_xmit(xmit_skb);
++	}
++	return;	
++}
++
+ static void
+ ieee80211_deliver_skb(struct ieee80211_rx_data *rx)
+ {
+ 	struct ieee80211_sub_if_data *sdata = rx->sdata;
+ 	struct net_device *dev = sdata->dev;
+-	struct sk_buff *skb, *xmit_skb;
++	struct sk_buff *skb, *nnof_skb;
++	struct sta_info *dsta, *rsta;
++	u32 in_port;
++	u8 outport;
++	u8 output_id = 0;
++	u8 *dst_ehdr, *src_ehdr;
+ 	struct ethhdr *ehdr = (struct ethhdr *) rx->skb->data;
+-	struct sta_info *dsta;
++	struct output_list *output_list;
+ 
+ 	skb = rx->skb;
+-	xmit_skb = NULL;
+-
+ 	ieee80211_rx_stats(dev, skb->len);
+ 
+ 	if (rx->sta) {
+@@ -2208,84 +2385,88 @@
+ 		rx->sta->rx_stats.msdu[rx->seqno_idx]++;
+ 		u64_stats_update_end(&rx->sta->rx_stats.syncp);
+ 	}
+-
+-	if ((sdata->vif.type == NL80211_IFTYPE_AP ||
+-	     sdata->vif.type == NL80211_IFTYPE_AP_VLAN) &&
+-	    !(sdata->flags & IEEE80211_SDATA_DONT_BRIDGE_PACKETS) &&
+-	    (sdata->vif.type != NL80211_IFTYPE_AP_VLAN || !sdata->u.vlan.sta)) {
+-		if (is_multicast_ether_addr(ehdr->h_dest) &&
+-		    ieee80211_vif_get_num_mcast_if(sdata) != 0) {
+-			/*
+-			 * send multicast frames both to higher layers in
+-			 * local net stack and back to the wireless medium
+-			 */
+-			xmit_skb = skb_copy(skb, GFP_ATOMIC);
+-			if (!xmit_skb)
+-				net_info_ratelimited("%s: failed to clone multicast frame\n",
+-						    dev->name);
+-		} else if (!is_multicast_ether_addr(ehdr->h_dest)) {
+-			dsta = sta_info_get(sdata, skb->data);
+-			if (dsta) {
+-				/*
+-				 * The destination station is associated to
+-				 * this AP (in this VLAN), so send the frame
+-				 * directly to it and do not pass it to local
+-				 * net stack.
+-				 */
+-				xmit_skb = skb;
+-				skb = NULL;
++	
++	dst_ehdr = skb->data;
++	src_ehdr = dst_ehdr + 6;
++	dsta = sta_info_get(sdata, src_ehdr);	// Get the station info of the sending device
++	if (dsta) {
++		in_port = dsta->sta.aid;	// input port = association ID
++		trace_printk("Mac80211_rx: Received packet from port %d (%s)\n", in_port, dsta->sdata->dev->name);
++	} else {
++		trace_printk("Mac80211_rx: Could not find source station info, dropping packet!\n");
++		kfree_skb(skb);		// Free the skb and return because we are dropping the packet
++		return;
++	}
++	if(strncmp("wlan1", dsta->sdata->dev->name, 5) == 0) in_port += FIRST_WLAN1_PORT;	// wlan0 = ports 1-32, wlan1 = ports 33-64
++
++	trace_printk("Mac80211_rx: Calling nnOpenflow: in port %d (%d bytes)\n",in_port, skb->len);
++	trace_printk("Mac80211_rx: Src/Dst: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x / %.2x:%.2x:%.2x:%.2x:%.2x:%.2x \n", src_ehdr[0], src_ehdr[1], src_ehdr[2], src_ehdr[3], src_ehdr[4], src_ehdr[5], dst_ehdr[0], dst_ehdr[1], dst_ehdr[2], dst_ehdr[3], dst_ehdr[4], dst_ehdr[5]);
++
++	nnof_skb = skb_copy(skb, GFP_ATOMIC);
++	if (!nnof_skb)
++	{
++		net_info_ratelimited("%s: failed to clone skb\n", dev->name);
++		return;	
++	}
++	kfree_skb(skb);
++	output_list = kmalloc(sizeof (struct output_list), GFP_ATOMIC);
++	nnOpenflow(in_port, nnof_skb, dev, output_list);
++
++	while (1)
++	{
++		trace_printk("Mac80211_rx: Returned outport 0x%X, output_id = %d\n", output_list->outport[output_id], output_id);
++
++		if (output_list->outport[output_id] == NN_PORT_DROP)		// No match, nnof_skb will be free by nnopenflow
++		{
++			kfree(output_list);
++			return;
++		}
++
++		if (output_list->outport[output_id] == OFPP13_FLOOD) 
++		{
++			outport = 0xFF;
++		}
++		
++		if (output_list->outport[output_id] == OFPP13_NORMAL) 
++		{
++			if (is_multicast_ether_addr(ehdr->h_dest) && ieee80211_vif_get_num_mcast_if(sdata) != 0)
++			{
++				outport = 0xFF;
++			} else if (!is_multicast_ether_addr(ehdr->h_dest))
++			{
++				outport = 0;
++				outport = output_list->outport[output_id];
+ 			}
+ 		}
+-	}
+-
+-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+-	if (skb) {
+-		/* 'align' will only take the values 0 or 2 here since all
+-		 * frames are required to be aligned to 2-byte boundaries
+-		 * when being passed to mac80211; the code here works just
+-		 * as well if that isn't true, but mac80211 assumes it can
+-		 * access fields as 2-byte aligned (e.g. for ether_addr_equal)
+-		 */
+-		int align;
+-
+-		align = (unsigned long)(skb->data + sizeof(struct ethhdr)) & 3;
+-		if (align) {
+-			if (WARN_ON(skb_headroom(skb) < 3)) {
+-				dev_kfree_skb(skb);
+-				skb = NULL;
++
++		if (output_list->outport[output_id] < ETH_PORT_NO)
++		{
++			trace_printk("Mac80211_rx: Checking AID for Out Port %d\n", output_list->outport[output_id]);
++			
++			if (output_list->outport[output_id] > FIRST_WLAN1_PORT)
++			{
++				rsta = sta_info_get_by_aid(sdata, output_list->outport[output_id] - FIRST_WLAN1_PORT);
+ 			} else {
+-				u8 *data = skb->data;
+-				size_t len = skb_headlen(skb);
+-				skb->data -= align;
+-				memmove(skb->data, data, len);
+-				skb_set_tail_pointer(skb, len);
++				rsta = sta_info_get_by_aid(sdata, output_list->outport[output_id]);
+ 			}
+-		}
+-	}
+-#endif
+-
+-	if (skb) {
+-		/* deliver to local stack */
+-		skb->protocol = eth_type_trans(skb, dev);
+-		memset(skb->cb, 0, sizeof(skb->cb));
+-		if (rx->napi)
+-			napi_gro_receive(rx->napi, skb);
+-		else
+-			netif_receive_skb(skb);
+-	}
+-
+-	if (xmit_skb) {
+-		/*
+-		 * Send to wireless media and increase priority by 256 to
+-		 * keep the received priority instead of reclassifying
+-		 * the frame (see cfg80211_classify8021d).
+-		 */
+-		xmit_skb->priority += 256;
+-		xmit_skb->protocol = htons(ETH_P_802_3);
+-		skb_reset_network_header(xmit_skb);
+-		skb_reset_mac_header(xmit_skb);
+-		dev_queue_xmit(xmit_skb);
+-	}
++			
++			if(rsta)
++			{
++				memcpy(skb->data, rsta->sta.addr, ETH_ALEN);
++				trace_printk("Mac80211_rx: Dst changed to: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n", dst_ehdr[0], dst_ehdr[1], dst_ehdr[2], dst_ehdr[3], dst_ehdr[4], dst_ehdr[5]);
++			}
++		}
++		trace_printk("Mac80211_rx: Sending packet to output function\n");
++		ieee80211_output_skb(output_list->skb[output_id], output_list->dev[output_id], output_list->outport[output_id]);
++		trace_printk("Mac80211_rx: Packet sent to output function\n");
++		output_id++;
++		if (output_id == MAX_OUTPUTS) 
++		{
++			kfree(output_list);
++			return;
++		}
++	}
++	kfree(output_list);
+ }
+ 
+ static ieee80211_rx_result debug_noinline

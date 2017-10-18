@@ -1,0 +1,35 @@
+
+config system
+	option ttylogin '0'
+	option log_size '64'
+	option urandom_seed '0'
+	option hostname 'ZodiacWX'
+	option zonename 'UTC'
+	option timezone 'GMT0'
+	option log_proto 'udp'
+	option conloglevel '8'
+	option cronloglevel '8'
+
+config timeserver 'ntp'
+	option enabled '1'
+	list server 'time.nist.gov'
+	list server 'pool.ntp.org'
+
+config led 'led_wlan2g'
+	option sysfs 'zodiac-wx:blue:wlan2g'
+	option default '0'
+	option name 'WLAN24G'
+	option trigger 'phy1rx'
+
+config led
+	option name 'Power'
+	option sysfs 'zodiac-wx:green:system'
+	option default '1'
+	option trigger 'default-on'
+
+config led
+	option default '0'
+	option name 'WLAN5G'
+	option sysfs 'zodiac-wx:blue:wlan2g'
+	option trigger 'phy0tx'
+
