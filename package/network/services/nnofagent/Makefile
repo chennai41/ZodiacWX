@@ -10,13 +10,13 @@ include $(TOPDIR)/rules.mk
 #TARGET_CFLAGS += -ggdb3
 
 PKG_NAME:=nnofagent
-PKG_VERSION:=20171010_4
+PKG_VERSION:=20171107_1
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPL-3.0
 PKG_SOURCE_URL:=https://github.com/NorthboundNetworks/nnofagent.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2017-10-10
+PKG_SOURCE_DATE:=2017-11-07
 PKG_SOURCE_VERSION:=1869c70b8152f45fa1bb5625afb05adbe39db0b2
 PKG_MAINTAINER:=Paul Zanna <paul@northboundnetworks.com>
 
