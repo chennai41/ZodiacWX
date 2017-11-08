@@ -4,4 +4,5 @@ config nnofagent
 	option enabled '1'
 	option auth_bypass '0'
 	option secure '0'
+	option hosts '0'
 
