@@ -37,6 +37,8 @@ endef
 define Package/packet-armour/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/packet-armour $(1)/usr/sbin/packet-armour
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/packet-armour.config $(1)/etc/config/packet-armour
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/packet-armour.init $(1)/etc/init.d/packet-armour
 endef
