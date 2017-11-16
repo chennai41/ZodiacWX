@@ -7,12 +7,12 @@ function index()
        return
     end
 
-	entry({"admin", "openflow"}, firstchild(), "Control", 60).dependent=false
-	entry({"admin", "openflow", "nnofagent"}, cbi("nnofagent"), _("Settings"), 1)
-	entry({"admin", "openflow", "packet-armour"}, cbi("packet-armour"), _("Packet Armour"), 2)
-	entry({"admin", "openflow", "flowtable"}, call("action_flowtable"), _("Flow Table"), 3)
-	entry({"admin", "openflow", "groups"}, call("action_groups"), _("Groups"), 4)
-	entry({"admin", "openflow", "meters"}, call("action_meters"), _("Meters"), 5)
+	entry({"admin", "Control"}, firstchild(), "Control", 60).dependent=false
+	entry({"admin", "Control", "nnofagent"}, cbi("nnofagent"), _("Settings"), 1)
+	entry({"admin", "Control", "packet-armour"}, cbi("packet-armour"), _("Packet Armour"), 2)
+	entry({"admin", "Control", "flowtable"}, call("action_flowtable"), _("Flow Table"), 3)
+	entry({"admin", "Control", "groups"}, call("action_groups"), _("Groups"), 4)
+	entry({"admin", "Control", "meters"}, call("action_meters"), _("Meters"), 5)
 
 end
 

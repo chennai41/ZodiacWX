@@ -1,4 +1,4 @@
-m = Map("packet-armour", "Control", "Here you can set the Network Control configuration.")
+m = Map("packet-armour", "Packet Armour", "Here you can set the Packet Armour configuration.")
 s = m:section(TypedSection, "packet-armour", "Packet Armour Settings")
 s.anonymous = true
 

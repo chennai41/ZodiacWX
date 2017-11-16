@@ -1,4 +1,5 @@
 m = Map("nnofagent", "Control", "Here you can set the Network Control configuration.")
+m2 = Map("packet-armour", "")
 g = m:section(TypedSection, "nnofagent", "Settings")
 g.anonymous = true
 e = g:option(ListValue, "enabled", "Controller")
@@ -24,4 +25,4 @@ e.rmempty = false
 s:option(Value, "controller_ip", "IP Address")
 s:option(Value, "controller_port", "Port")
 
-return m
+return m, m2
