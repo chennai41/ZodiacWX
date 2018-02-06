@@ -37,6 +37,8 @@ define Package/luci-app-nnofagent/install
 		$(1)/usr/lib/lua/luci/controller/
 		$(CP) ./files/model/cbi/nnofagent.lua \
 		$(1)/usr/lib/lua/luci/model/cbi/
+		$(CP) ./files/model/cbi/packet-armour.lua \
+		$(1)/usr/lib/lua/luci/model/cbi/
 		$(CP) ./files/view/flowtable.htm \
 		$(1)/usr/lib/lua/luci/view/
 		$(CP) ./files/view/groups.htm \
@@ -50,6 +52,9 @@ define Package/luci-app-nnofagent/postinst
 [ -n "$${IPKG_INSTROOT}" ] || {
 	if [ -f /etc/uci-defaults/nnofagent ]; then
 	( . /etc/uci-defaults/nnofagent ) && rm -f /etc/uci-defaults/nnofagent
+	fi
+	if [ -f /etc/uci-defaults/packet-armour ]; then
+	( . /etc/uci-defaults/packet-armour ) && rm -f /etc/uci-defaults/packet-armour
 	fi
 }
 endef

@@ -60,7 +60,7 @@
 +	src_ehdr = dst_ehdr + 6;
 +	ssta = sta_info_get(sdata, src_ehdr);
 +	// Only process packets if they are from Ethernet
-+	if (skb->skb_iif > 0 && skb->skb_iif < 8)		
++	if (skb->skb_iif > 0 && skb->skb_iif < 10)		
 +	{
 +		in_port = ETH_PORT_NO;
 +		trace_printk("Mac80211_tx: Calling nnOpenflow: in port %d (%d bytes)\n", in_port, skb->len);

@@ -55,3 +55,6 @@ config tinyproxy
 
 config nnofagent
 	option init nnofagent
+
+config packet-armour
+	option init packet-armour

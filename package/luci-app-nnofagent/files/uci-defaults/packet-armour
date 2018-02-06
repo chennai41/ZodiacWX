@@ -1,0 +1,3 @@
+config packet-armour
+	option hosts '0'
+
