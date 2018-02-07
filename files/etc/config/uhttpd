@@ -1,5 +1,7 @@
 
 config uhttpd 'main'
+	list listen_http '0.0.0.0:80'
+	list listen_http '[::]:80'
 	list listen_https '0.0.0.0:443'
 	list listen_https '[::]:443'
 	option redirect_https '1'
@@ -22,5 +24,5 @@ config cert 'defaults'
 	option country 'ZZ'
 	option state 'Somewhere'
 	option location 'Unknown'
-	option commonname 'LEDE'
+	option commonname 'ZodiacWX'
 
