@@ -1,3 +1,16 @@
+define Device/ap121f
+  DEVICE_TITLE := ALFA Network AP121F
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage -swconfig
+  BOARDNAME := AP121F
+  IMAGE_SIZE := 16064k
+  CONSOLE := ttyATH0,115200
+  MTDPARTS := spi0.0:192k(u-boot)ro,64k(u-boot-env),64k(art)ro,-(firmware)
+  SUPPORTED_DEVICES := ap121f
+  IMAGE/sysupgrade.bin = append-kernel | pad-to $$$$(BLOCKSIZE) | \
+	append-rootfs | pad-rootfs | append-metadata | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += ap121f
+
 define Device/ap90q
   DEVICE_TITLE := YunCore AP90Q
   BOARDNAME = AP90Q
@@ -501,16 +514,6 @@ define Device/xd3200
   BOARDNAME = XD3200
 endef
 TARGET_DEVICES += xd3200
-
-define Device/zodiac-wx
-  DEVICE_TITLE := Northbound Networks Zodiac WX
-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x kmod-nn-openflow nnofagent
-  BOARDNAME = ZODIAC-WX
-  IMAGE_SIZE = 16000k
-  CONSOLE = ttyS0,115200
-  MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
-endef
-TARGET_DEVICES += zodiac-wx
 
 define Device/tellstick-znet-lite
   $(Device/tplink-16mlzma)

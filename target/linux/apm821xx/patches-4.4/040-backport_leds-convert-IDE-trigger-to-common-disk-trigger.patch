@@ -47,7 +47,7 @@ Signed-off-by: Jacek Anaszewski <j.anaszewski@samsung.com>
  #include <linux/pm_runtime.h>
  #include <linux/platform_device.h>
  
-@@ -4914,6 +4915,9 @@ void ata_qc_complete(struct ata_queued_c
+@@ -4945,6 +4946,9 @@ void ata_qc_complete(struct ata_queued_c
  {
  	struct ata_port *ap = qc->ap;
  
@@ -193,7 +193,7 @@ Signed-off-by: Jacek Anaszewski <j.anaszewski@samsung.com>
 -MODULE_LICENSE("GPL");
 --- a/include/linux/leds.h
 +++ b/include/linux/leds.h
-@@ -302,10 +302,10 @@ static inline void *led_get_trigger_data
+@@ -308,10 +308,10 @@ static inline void *led_get_trigger_data
  #endif /* CONFIG_LEDS_TRIGGERS */
  
  /* Trigger specific functions */

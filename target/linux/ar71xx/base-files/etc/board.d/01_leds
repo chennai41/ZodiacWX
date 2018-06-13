@@ -49,6 +49,10 @@ antrouter-r1)
 	ucidef_set_led_wlan "wlan" "WLAN" "$board:green:wlan" "phy0tpt"
 	ucidef_set_led_default "btc" "BTC" "$board:green:btc" "0"
 	;;
+ap121f)
+	ucidef_set_led_netdev "lan" "LAN" "$board:green:lan" "eth0"
+	ucidef_set_led_wlan "wlan" "WLAN" "$board:green:wlan" "phy0tpt"
+	;;
 arduino-yun)
 	ucidef_set_led_wlan "wlan" "WLAN" "arduino:blue:wlan" "phy0tpt"
 	ucidef_set_led_usbdev "usb" "USB" "arduino:white:usb" "1-1.1"
@@ -794,9 +798,6 @@ zcn-1523h-2)
 zcn-1523h-5)
 	ucidef_set_led_netdev "lan1" "lan1" "zcn-1523h:green:lan1" "eth0"
 	ucidef_set_led_netdev "lan2" "lan2" "zcn-1523h:green:lan2" "eth1"
-	;;
-zodiac-wx)
-	ucidef_set_led_wlan "wlan2g" "WLAN2G" "$board:blue:wlan2g" "phy1tpt"
 	;;
 esac
 

@@ -13,7 +13,7 @@
  	  device, it has to decide which ones to send first, which ones to
 --- a/net/sched/sch_fq_codel.c
 +++ b/net/sched/sch_fq_codel.c
-@@ -688,7 +688,7 @@ static const struct Qdisc_class_ops fq_c
+@@ -694,7 +694,7 @@ static const struct Qdisc_class_ops fq_c
  	.walk		=	fq_codel_walk,
  };
  
@@ -22,7 +22,7 @@
  	.cl_ops		=	&fq_codel_class_ops,
  	.id		=	"fq_codel",
  	.priv_size	=	sizeof(struct fq_codel_sched_data),
-@@ -704,6 +704,7 @@ static struct Qdisc_ops fq_codel_qdisc_o
+@@ -710,6 +710,7 @@ static struct Qdisc_ops fq_codel_qdisc_o
  	.dump_stats =	fq_codel_dump_stats,
  	.owner		=	THIS_MODULE,
  };
@@ -70,10 +70,10 @@
 +		qdisc = qdisc_create_dflt(dev_queue, &fq_codel_qdisc_ops,
  					  TC_H_MAKE(TC_H_MAJ(sch->handle),
  						    TC_H_MIN(ntx + 1)));
- 		if (qdisc == NULL)
+ 		if (!qdisc)
 --- a/net/sched/sch_mqprio.c
 +++ b/net/sched/sch_mqprio.c
-@@ -124,7 +124,7 @@ static int mqprio_init(struct Qdisc *sch
+@@ -122,7 +122,7 @@ static int mqprio_init(struct Qdisc *sch
  
  	for (i = 0; i < dev->num_tx_queues; i++) {
  		dev_queue = netdev_get_tx_queue(dev, i);
@@ -81,10 +81,10 @@
 +		qdisc = qdisc_create_dflt(dev_queue, &fq_codel_qdisc_ops,
  					  TC_H_MAKE(TC_H_MAJ(sch->handle),
  						    TC_H_MIN(i + 1)));
- 		if (qdisc == NULL) {
+ 		if (!qdisc)
 --- a/net/sched/sch_api.c
 +++ b/net/sched/sch_api.c
-@@ -1948,7 +1948,7 @@ static int __init pktsched_init(void)
+@@ -1951,7 +1951,7 @@ static int __init pktsched_init(void)
  		return err;
  	}
  
