@@ -57,16 +57,16 @@ config () {
 	export ${NO_EXPORT:+-n} CONFIG_NUM_SECTIONS=$(($CONFIG_NUM_SECTIONS + 1))
 	name="${name:-cfg$CONFIG_NUM_SECTIONS}"
 	append CONFIG_SECTIONS "$name"
-	export ${NO_EXPORT:+-n} CONFIG_SECTION="$name"
-	config_set "$CONFIG_SECTION" "TYPE" "${cfgtype}"
 	[ -n "$NO_CALLBACK" ] || config_cb "$cfgtype" "$name"
+	export ${NO_EXPORT:+-n} CONFIG_SECTION="$name"
+	export ${NO_EXPORT:+-n} "CONFIG_${CONFIG_SECTION}_TYPE=$cfgtype"
 }
 
 option () {
 	local varname="$1"; shift
 	local value="$*"
 
-	config_set "$CONFIG_SECTION" "${varname}" "${value}"
+	export ${NO_EXPORT:+-n} "CONFIG_${CONFIG_SECTION}_${varname}=$value"
 	[ -n "$NO_CALLBACK" ] || option_cb "$varname" "$*"
 }
 
@@ -81,7 +81,7 @@ list() {
 	config_set "$CONFIG_SECTION" "${varname}_ITEM$len" "$value"
 	config_set "$CONFIG_SECTION" "${varname}_LENGTH" "$len"
 	append "CONFIG_${CONFIG_SECTION}_${varname}" "$value" "$LIST_SEP"
-	[ -n "$NO_CALLBACK" ] || list_cb "$varname" "$*"
+	list_cb "$varname" "$*"
 }
 
 config_unset() {
@@ -113,8 +113,11 @@ config_set() {
 	local section="$1"
 	local option="$2"
 	local value="$3"
+	local old_section="$CONFIG_SECTION"
 
-	export ${NO_EXPORT:+-n} "CONFIG_${section}_${option}=${value}"
+	CONFIG_SECTION="$section"
+	option "$option" "$value"
+	CONFIG_SECTION="$old_section"
 }
 
 config_foreach() {
@@ -155,7 +158,7 @@ insert_modules() {
 		if [ -f /etc/modules.d/$m ]; then
 			sed 's/^[^#]/insmod &/' /etc/modules.d/$m | ash 2>&- || :
 		else
-			modprobe $m || :
+			modprobe $m
 		fi
 	done
 }
@@ -237,7 +240,7 @@ default_postinst() {
 		[ -d /tmp/.uci ] || mkdir -p /tmp/.uci
 		for i in $(sed -ne 's!^/etc/uci-defaults/!!p' "/usr/lib/opkg/info/${pkgname}.list"); do (
 			cd /etc/uci-defaults
-			[ -f "$i" ] && . ./"$i" && rm -f "$i"
+			[ -f "$i" ] && . "$i" && rm -f "$i"
 		) done
 		uci commit
 	fi
@@ -348,10 +351,6 @@ user_add() {
 
 user_exists() {
 	grep -qs "^${1}:" ${IPKG_INSTROOT}/etc/passwd
-}
-
-board_name() {
-	[ -e /tmp/sysinfo/board_name ] && cat /tmp/sysinfo/board_name || echo "generic"
 }
 
 [ -z "$IPKG_INSTROOT" -a -f /lib/config/uci.sh ] && . /lib/config/uci.sh

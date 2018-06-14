@@ -342,12 +342,6 @@ mvswitch_read_status(struct phy_device *pdev)
 }
 
 static int
-mvswitch_aneg_done(struct phy_device *phydev)
-{
-	return 1;	/* Return any positive value */
-}
-
-static int
 mvswitch_config_aneg(struct phy_device *phydev)
 {
 	return 0;
@@ -418,7 +412,6 @@ static struct phy_driver mvswitch_driver = {
 	.detach		= &mvswitch_detach,
 	.config_init	= &mvswitch_config_init,
 	.config_aneg	= &mvswitch_config_aneg,
-	.aneg_done	= &mvswitch_aneg_done,
 	.read_status	= &mvswitch_read_status,
 	.driver		= { .owner = THIS_MODULE,},
 };

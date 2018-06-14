@@ -27,17 +27,13 @@
 
 static nvram_handle_t * nvram_open_rdonly(void)
 {
-	char *file = nvram_find_staging();
+	const char *file = nvram_find_staging();
 
 	if( file == NULL )
 		file = nvram_find_mtd();
 
-	if( file != NULL ) {
-		nvram_handle_t *h = nvram_open(file, NVRAM_RO);
-		if( strcmp(file, NVRAM_STAGING) )
-			free(file);
-		return h;
-	}
+	if( file != NULL )
+		return nvram_open(file, NVRAM_RO);
 
 	return NULL;
 }
@@ -133,18 +129,6 @@ static int do_info(nvram_handle_t *nvram)
 	return 0;
 }
 
-static void usage(void)
-{
-	fprintf(stderr,
-		"Usage:\n"
-		"	nvram show\n"
-		"	nvram info\n"
-		"	nvram get variable\n"
-		"	nvram set variable=value [set ...]\n"
-		"	nvram unset variable [unset ...]\n"
-		"	nvram commit\n"
-	);
-}
 
 int main( int argc, const char *argv[] )
 {
@@ -155,16 +139,15 @@ int main( int argc, const char *argv[] )
 	int done = 0;
 	int i;
 
-	if( argc < 2 ) {
-		usage();
-		return 1;
-	}
-
 	/* Ugly... iterate over arguments to see whether we can expect a write */
-	if( ( !strcmp(argv[1], "set")  && 2 < argc ) ||
-		( !strcmp(argv[1], "unset") && 2 < argc ) ||
-		!strcmp(argv[1], "commit") )
-		write = 1;
+	for( i = 1; i < argc; i++ )
+		if( ( !strcmp(argv[i], "set")   && ++i < argc ) ||
+			( !strcmp(argv[i], "unset") && ++i < argc ) ||
+			!strcmp(argv[i], "commit") )
+		{
+			write = 1;
+			break;
+		}
 
 
 	nvram = write ? nvram_open_staging() : nvram_open_rdonly();
@@ -240,14 +223,22 @@ int main( int argc, const char *argv[] )
 			"	- Insufficient permissions to open mtd device\n"
 			"	- Insufficient memory to complete operation\n"
 			"	- Memory mapping failed or not supported\n"
-			"	- Nvram magic not found in specific nvram partition\n"
 		);
 
 		stat = 1;
 	}
 	else if( !done )
 	{
-		usage();
+		fprintf(stderr,
+			"Usage:\n"
+			"	nvram show\n"
+			"	nvram info\n"
+			"	nvram get variable\n"
+			"	nvram set variable=value [set ...]\n"
+			"	nvram unset variable [unset ...]\n"
+			"	nvram commit\n"
+		);
+
 		stat = 1;
 	}
 

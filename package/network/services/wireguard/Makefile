@@ -11,17 +11,17 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20180519
+PKG_VERSION:=0.0.20171017
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_HASH:=8846b3006c3f7e079bb38a4c985ccc2981e259f56c927b4cf47cbc1420e1c462
+PKG_HASH:=57b79a62874d9b99659a744513d4f6f9d88cb772deaa99e485b6fed3004a35cd
 
 PKG_LICENSE:=GPL-2.0 Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/WireGuard-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -36,6 +36,7 @@ define Package/wireguard/Default
   SUBMENU:=VPN
   URL:=https://www.wireguard.com
   MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
+              Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>, \
               Dan Luedtke <mail@danrl.com>, \
               Jason A. Donenfeld <Jason@zx2c4.com>
 endef
@@ -60,7 +61,6 @@ include $(INCLUDE_DIR)/package-defaults.mk
 
 # Used by Build/Compile/Default
 MAKE_PATH:=src/tools
-MAKE_VARS += PLATFORM=linux
 
 define Build/Compile
 	$(MAKE) $(KERNEL_MAKEOPTS) M="$(PKG_BUILD_DIR)/src" modules

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dropbear
 PKG_VERSION:=2017.75
-PKG_RELEASE:=4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:= \
@@ -23,10 +23,7 @@ PKG_LICENSE_FILES:=LICENSE libtomcrypt/LICENSE libtommath/LICENSE
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_TARGET_INIT_PATH CONFIG_DROPBEAR_ECC \
-	CONFIG_DROPBEAR_CURVE25519 CONFIG_DROPBEAR_ZLIB \
-	CONFIG_DROPBEAR_UTMP CONFIG_DROPBEAR_PUTUTLINE
+PKG_CONFIG_DEPENDS:=CONFIG_TARGET_INIT_PATH CONFIG_DROPBEAR_ECC CONFIG_DROPBEAR_CURVE25519
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -47,7 +44,6 @@ define Package/dropbear
   SECTION:=net
   CATEGORY:=Base system
   TITLE:=Small SSH2 client/server
-  DEPENDS:= +DROPBEAR_ZLIB:zlib
 endef
 
 define Package/dropbear/description
@@ -78,7 +74,7 @@ CONFIGURE_ARGS += \
 	--disable-loginfunc \
 	$(if $(CONFIG_DROPBEAR_PUTUTLINE),,--disable-pututline) \
 	--disable-pututxline \
-	$(if $(CONFIG_DROPBEAR_ZLIB),,--disable-zlib) \
+	--disable-zlib \
 	--enable-bundled-libtom
 
 TARGET_CFLAGS += -DARGTYPE=3 -ffunction-sections -fdata-sections

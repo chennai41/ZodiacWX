@@ -107,7 +107,6 @@ define Device/wt3020-8M
   IMAGE/factory.bin := $$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | \
 	poray-header -B WT3020 -F 8M
   DEVICE_TITLE := Nexx WT3020 (8MB)
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += wt3020-8M
 
@@ -220,9 +219,7 @@ TARGET_DEVICES += cf-wr800n
 define Device/cs-qr10
   DTS := CS-QR10
   DEVICE_TITLE := Planex CS-QR10
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci \
-	kmod-sound-core kmod-sound-mt7620 \
-	kmod-i2c-ralink kmod-sdhci-mt7620
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-i2c-core kmod-i2c-ralink kmod-sound-core kmod-sound-mtk kmod-sdhci-mt7620
 endef
 TARGET_DEVICES += cs-qr10
 
@@ -384,9 +381,8 @@ TARGET_DEVICES += zte-q7
 
 define Device/youku-yk1
   DTS := YOUKU-YK1
-  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := YOUKU YK1
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
 endef
 TARGET_DEVICES += youku-yk1
 
@@ -447,7 +443,7 @@ define Device/dch-m225
 	seama-seal -m "signature=wapn22_dlink.2013gui_dap1320b" | \
 	check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := D-Link DCH-M225
-  DEVICE_PACKAGES := kmod-mt76 kmod-sound-core kmod-sound-mt7620 kmod-i2c-ralink
+  DEVICE_PACKAGES := kmod-mt76
 endef
 TARGET_DEVICES += dch-m225
 

@@ -47,8 +47,6 @@ static void _nvram_free(nvram_handle_t *h)
 	for (i = 0; i < NVRAM_ARRAYSIZE(h->nvram_hash); i++) {
 		for (t = h->nvram_hash[i]; t; t = next) {
 			next = t->next;
-			if (t->value)
-				free(t->value);
 			free(t);
 		}
 		h->nvram_hash[i] = NULL;
@@ -57,8 +55,6 @@ static void _nvram_free(nvram_handle_t *h)
 	/* Free dead table */
 	for (t = h->nvram_dead; t; t = next) {
 		next = t->next;
-		if (t->value)
-			free(t->value);
 		free(t);
 	}
 
@@ -384,9 +380,7 @@ nvram_handle_t * nvram_open(const char *file, int rdonly)
 
 			if( offset < 0 )
 			{
-				munmap(mmap_area, nvram_part_size);
 				free(mtd);
-				close(fd);
 				return NULL;
 			}
 			else if( (h = malloc(sizeof(nvram_handle_t))) != NULL )
@@ -416,7 +410,6 @@ nvram_handle_t * nvram_open(const char *file, int rdonly)
 	}
 
 	free(mtd);
-	close(fd);
 	return NULL;
 }
 

@@ -113,7 +113,6 @@ proto_wireguard_setup() {
   config_get addresses     "${config}" "addresses"
   config_get mtu           "${config}" "mtu"
   config_get fwmark        "${config}" "fwmark"
-  config_get ip6prefix     "${config}" "ip6prefix"
 
   # create interface
   ip link del dev "${config}" 2>/dev/null
@@ -168,11 +167,6 @@ proto_wireguard_setup() {
         proto_add_ipv4_address "${address%%/*}" "32"
       ;;
     esac
-  done
-
-  # support ip6 prefixes
-  for prefix in ${ip6prefix}; do
-      proto_add_ipv6_prefix "$prefix"
   done
 
   # endpoint dependency

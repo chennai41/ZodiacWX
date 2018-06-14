@@ -1,3 +1,5 @@
+. /lib/functions/lantiq.sh
+
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
@@ -6,7 +8,7 @@ platform_check_image() {
 }
 
 platform_pre_upgrade() {
-	local board=$(board_name)
+	local board=$(lantiq_board_name)
 
 	case "$board" in
 	BTHOMEHUBV2B|BTHOMEHUBV3A|BTHOMEHUBV5A|P2812HNUF* )

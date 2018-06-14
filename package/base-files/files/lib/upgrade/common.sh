@@ -208,7 +208,7 @@ get_magic_long() {
 }
 
 export_bootdevice() {
-	local cmdline uuid disk uevent line
+	local cmdline uuid disk uevent
 	local MAJOR MINOR DEVNAME DEVTYPE
 
 	if read cmdline < /proc/cmdline; then
@@ -241,9 +241,8 @@ export_bootdevice() {
 		esac
 
 		if [ -e "$uevent" ]; then
-			while read line; do
-				export -n "$line"
-			done < "$uevent"
+			. "$uevent"
+
 			export BOOTDEV_MAJOR=$MAJOR
 			export BOOTDEV_MINOR=$MINOR
 			return 0
@@ -255,12 +254,10 @@ export_bootdevice() {
 
 export_partdevice() {
 	local var="$1" offset="$2"
-	local uevent line MAJOR MINOR DEVNAME DEVTYPE
+	local uevent MAJOR MINOR DEVNAME DEVTYPE
 
 	for uevent in /sys/class/block/*/uevent; do
-		while read line; do
-			export -n "$line"
-		done < "$uevent"
+		. "$uevent"
 		if [ $BOOTDEV_MAJOR = $MAJOR -a $(($BOOTDEV_MINOR + $offset)) = $MINOR -a -b "/dev/$DEVNAME" ]; then
 			export "$var=$DEVNAME"
 			return 0
@@ -270,14 +267,6 @@ export_partdevice() {
 	return 1
 }
 
-hex_le32_to_cpu() {
-	[ "$(echo 01 | hexdump -v -n 2 -e '/2 "%x"')" == "3031" ] && {
-		echo "${1:0:2}${1:8:2}${1:6:2}${1:4:2}${1:2:2}"
-		return
-	}
-	echo "$@"
-}
-
 get_partitions() { # <device> <filename>
 	local disk="$1"
 	local filename="$2"
@@ -285,8 +274,8 @@ get_partitions() { # <device> <filename>
 	if [ -b "$disk" -o -f "$disk" ]; then
 		v "Reading partition table from $filename..."
 
-		local magic=$(dd if="$disk" bs=2 count=1 skip=255 2>/dev/null)
-		if [ "$magic" != $'\x55\xAA' ]; then
+		local magic="$(hexdump -v -n 2 -s 0x1FE -e '1/2 "0x%04X"' "$disk")"
+		if [ "$magic" != 0xAA55 ]; then
 			v "Invalid partition table on $disk"
 			exit
 		fi
@@ -297,9 +286,9 @@ get_partitions() { # <device> <filename>
 		for part in 1 2 3 4; do
 			set -- $(hexdump -v -n 12 -s "$((0x1B2 + $part * 16))" -e '3/4 "0x%08X "' "$disk")
 
-			local type="$(( $(hex_le32_to_cpu $1) % 256))"
-			local lba="$(( $(hex_le32_to_cpu $2) ))"
-			local num="$(( $(hex_le32_to_cpu $3) ))"
+			local type="$(($1 % 256))"
+			local lba="$(($2))"
+			local num="$(($3))"
 
 			[ $type -gt 0 ] || continue
 
