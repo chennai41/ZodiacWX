@@ -5,4 +5,4 @@ src-git telephony https://git.lede-project.org/feed/telephony.git^ac6415e61f147a
 # Zodiac WX feeds
 src-git luci https://github.com/NorthboundNetworks/luci.git;Zodiac-WX-1.10
 src-git zwxtheme https://github.com/NorthboundNetworks/ZodiacWX-Luci-Theme-Grey.git
-src-git ovs https://github.com/berlin-open-wireless-lab/package-ovsd.git
+

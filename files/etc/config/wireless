@@ -15,6 +15,7 @@ config wifi-iface 'default_radio0'
 	option ssid 'ZodiacWX_5GHz'
 	option encryption 'psk2'
 	option key '66666666'
+	option isolate '1'
 
 config wifi-device 'radio1'
 	option type 'mac80211'
@@ -32,4 +33,4 @@ config wifi-iface 'default_radio1'
 	option ssid 'ZodiacWX_24GHz'
 	option encryption 'psk2'
 	option key '66666666'
-
+	option isolate '1'
