@@ -778,6 +778,7 @@ wzr-hp-g300nh)
 	ucidef_set_led_netdev "router" "Router" "buffalo:green:router" "eth1"
 	ucidef_set_led_usbdev "usb" "USB" "buffalo:blue:usb" "1-1"
 	;;
+zodiac-wx|\
 xd3200)
 	ucidef_set_led_wlan "wlan2g" "WLAN2G" "$board:blue:wlan2g" "phy1tpt"
 	;;

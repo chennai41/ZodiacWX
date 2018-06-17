@@ -12,6 +12,12 @@ ovs-vsctl --may-exist add-port $OVS_BR wlan1
 ovs-vsctl --may-exist add-port $OVS_BR eth0.1
 sleep 1
 
+#Set the OpenFlow port numbers 
+ovs-vsctl set Interface wlan0 ofport_request=1
+ovs-vsctl set Interface wlan1 ofport_request=2
+ovs-vsctl set Interface eth0.1 ofport_request=3
+sleep 1
+
 # Configure settings and restart interfaces
 ovs-vsctl set bridge $OVS_BR stp_enable=true
 sleep 1

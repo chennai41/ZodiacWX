@@ -1208,6 +1208,9 @@ ar71xx_board_detect() {
 	*XD3200)
 		name="xd3200"
 		;;
+	*"Zodiac WX")
+		name="zodiac-wx"
+		;;
 	*Z1)
 		name="z1"
 		;;

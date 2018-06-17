@@ -417,6 +417,7 @@ ar71xx_setup_interfaces()
 			"0@eth0" "1:lan" "2:wan"
 		;;
 	unifiac-pro|\
+	zodiac-wx|\
 	xd3200)
 		ucidef_add_switch "switch0" \
 			"0@eth0" "2:lan" "3:wan"

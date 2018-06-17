@@ -26,6 +26,7 @@ get_status_led() {
 	minibox-v1|\
 	som9331|\
 	sr3200|\
+	zodiac-wx|\
 	xd3200)
 		status_led="$board:green:system"
 		;;
