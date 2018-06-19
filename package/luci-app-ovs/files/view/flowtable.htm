@@ -1,0 +1,6 @@
+<%+header%>
+<h2 name="content"><%:Flow Table%></h2>
+<div id="content_flowlog">
+<textarea readonly="readonly" wrap="off" rows="<%=flowtable:cmatch("\n")+2%>" id="syslog"><%=flowtable:pcdata()%></textarea>
+</div>
+<%+footer%>
