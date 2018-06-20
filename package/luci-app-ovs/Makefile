@@ -33,11 +33,13 @@ define Package/luci-app-ovs/install
 		$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view
 		$(CP) ./files/controller/ovs.lua \
 		$(1)/usr/lib/lua/luci/controller/
-		$(CP) ./files/view/flowtable.htm \
+		$(CP) ./files/view/flows.htm \
 		$(1)/usr/lib/lua/luci/view/
 		$(CP) ./files/view/groups.htm \
 		$(1)/usr/lib/lua/luci/view/
-		$(CP) ./files/view/meters.htm \
+		$(CP) ./files/view/ports.htm \
+		$(1)/usr/lib/lua/luci/view/
+		$(CP) ./files/view/tables.htm \
 		$(1)/usr/lib/lua/luci/view/
 endef
 
