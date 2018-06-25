@@ -1,5 +1,5 @@
 # The following commands configure Open vSwitch, please use caution when editing.
-# If you can no longer connect to the device due to a miss configuration perform 
+# If you can no longer connect to the device due to a misconfiguration please perform 
 # a factory reset by pressing and holding the reset button beneath the device for
 # 20 seconds and then release to allow the device to restart.
 
