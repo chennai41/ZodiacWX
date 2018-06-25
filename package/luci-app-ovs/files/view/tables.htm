@@ -1,0 +1,6 @@
+<%+header%>
+<h2 name="content"><%:Tables%></h2>
+<div id="content_flowlog">
+<textarea readonly="readonly" wrap="off" rows="<%=tables:cmatch("\n")+2%>" id="syslog"><%=tables:pcdata()%></textarea>
+</div>
+<%+footer%>

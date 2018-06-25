@@ -203,6 +203,7 @@ platform_check_image() {
 	airgatewaypro|\
 	airgateway|\
 	airrouter|\
+	ap121f|\
 	ap132|\
 	ap90q|\
 	bullet-m|\
@@ -279,8 +280,8 @@ platform_check_image() {
 	wzr-hp-g300nh2|\
 	wzr-hp-g300nh|\
 	wzr-hp-g450h|\
-	xd3200|\
-	zodiac-wx)
+	zodiac-wx|\
+	xd3200)
 		[ "$magic" != "2705" ] && {
 			echo "Invalid image type."
 			return 1

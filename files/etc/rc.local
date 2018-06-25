@@ -1,0 +1,32 @@
+# The following commands configure Open vSwitch, please use caution when editing.
+# If you can no longer connect to the device due to a misconfiguration please perform 
+# a factory reset by pressing and holding the reset button beneath the device for
+# 20 seconds and then release to allow the device to restart.
+
+OVS_BR=ovslan
+IP_CONTROLLER=192.168.1.136
+PORT_CONTROLLER=6633
+
+# Add Bridge Open vSwitch and ports
+ovs-vsctl --may-exist add-br $OVS_BR
+sleep 2
+ovs-vsctl --may-exist add-port $OVS_BR wlan0
+ovs-vsctl --may-exist add-port $OVS_BR wlan1
+ovs-vsctl --may-exist add-port $OVS_BR eth0.1
+sleep 1
+
+#Set the OpenFlow port numbers 
+ovs-vsctl set Interface wlan0 ofport_request=1
+ovs-vsctl set Interface wlan1 ofport_request=2
+ovs-vsctl set Interface eth0.1 ofport_request=3
+sleep 1
+
+# Configure settings and restart interfaces
+ovs-vsctl set bridge $OVS_BR stp_enable=true
+sleep 1
+ovs-vsctl set-controller $OVS_BR tcp:$IP_CONTROLLER:$PORT_CONTROLLER
+sleep 1
+ovs-vsctl set-fail-mode $OVS_BR standalone
+sleep 1
+/etc/init.d/network restart
+exit 0

@@ -1,8 +1,0 @@
-#!/bin/sh
-
-/etc/init.d/dropbear enabled && {
-	/etc/init.d/dropbear stop
-	/etc/init.d/dropbear disable
-}
-
-exit 0
